@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Virtual environment
+.venv/
+venv/
+ENV/
+
+# PyInstaller
+*.spec
+
+# Runtime data (created when running)
+.llamaterm/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Executable (can be rebuilt from source)
+llamaterm
