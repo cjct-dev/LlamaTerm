@@ -139,6 +139,9 @@ Use `/set KEY VALUE` to change these settings:
 | `max_tokens` | int | 4096 | Maximum response length |
 | `repeat_penalty` | float | 1.1 | Penalty for repetition |
 | `server_url` | string | - | llama.cpp server URL |
+| `request_timeout` | int/null | null | API timeout in seconds (null = no timeout) |
+
+**Note on timeouts:** By default, there is no timeout for API requests. This allows large models that are partially offloaded to system RAM (which can be very slow) to complete without timing out. Set `request_timeout` only if you need to limit wait time.
 
 ## Built-in Tools
 
