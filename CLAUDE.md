@@ -78,6 +78,8 @@ When LLM only returns tool calls (no text), `message["content"]` is `None`. Hand
 - Router mode: model selected via `model` field in request
 - Health check: `/health` returns `{"status": "ok"}`
 - Supports both streaming (SSE) and non-streaming responses
+- **No timeout by default** for chat completions - large models offloaded to RAM can be very slow
+- Optional `request_timeout` config (seconds) if timeout is desired
 
 ### Model Compatibility
 Not all models support tool calling. Models with chat templates requiring strict user/assistant role alternation (e.g., Gemma) fail with HTTP 500 when tool messages (`role: "tool"`) are included.

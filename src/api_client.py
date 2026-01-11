@@ -46,8 +46,12 @@ class LlamaClient:
             raise APIError(f"Invalid JSON response: {e}")
 
     def _stream_request(self, endpoint: str, data: dict,
-                        timeout: int = 300) -> Generator[dict, None, None]:
-        """Make a streaming request and yield parsed SSE events."""
+                        timeout: Optional[int] = None) -> Generator[dict, None, None]:
+        """Make a streaming request and yield parsed SSE events.
+
+        Note: timeout=None means no timeout (wait indefinitely).
+        This is important for large models offloaded to system RAM.
+        """
         url = f"{self.base_url}{endpoint}"
         headers = {"Content-Type": "application/json", "Accept": "text/event-stream"}
 
@@ -55,6 +59,7 @@ class LlamaClient:
         req = urllib.request.Request(url, data=request_data, headers=headers, method="POST")
 
         try:
+            # timeout=None allows indefinite wait for slow inference
             with urllib.request.urlopen(req, timeout=timeout) as response:
                 buffer = ""
                 for line in response:
@@ -138,10 +143,16 @@ class LlamaClient:
 
         logger.debug(f"Chat completion request: model={model}, messages={len(messages)}, tools={len(tools) if tools else 0}")
 
+        # Use configurable timeout, default None (no timeout) for slow inference
+        timeout = self.config.get("request_timeout", None)
+
         if stream:
-            return self._stream_request("/v1/chat/completions", payload, timeout=300)
+            # Streaming: no timeout by default - wait for tokens as they come
+            return self._stream_request("/v1/chat/completions", payload, timeout=timeout)
         else:
-            return self._request("/v1/chat/completions", method="POST", data=payload, timeout=300)
+            # Non-streaming: use timeout if set, otherwise no timeout
+            return self._request("/v1/chat/completions", method="POST", data=payload,
+                                timeout=timeout if timeout else 3600)
 
     def chat_completion_non_stream(
         self,
@@ -165,7 +176,10 @@ class LlamaClient:
             payload["tool_choice"] = "auto"
 
         logger.debug(f"Chat completion (non-stream): model={model}, messages={len(messages)}")
-        return self._request("/v1/chat/completions", method="POST", data=payload, timeout=300)
+        # No timeout by default for slow inference (large models offloaded to RAM)
+        timeout = self.config.get("request_timeout", None)
+        return self._request("/v1/chat/completions", method="POST", data=payload,
+                            timeout=timeout if timeout else 3600)
 
 
 def format_tool_for_api(tool: dict) -> dict:
