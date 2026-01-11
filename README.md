@@ -149,17 +149,14 @@ The AI has access to these tools:
 
 | Tool | Description |
 |------|-------------|
-| `read_file` | Read contents of a file |
-| `write_file` | Create or overwrite a file |
-| `append_file` | Append content to a file |
-| `list_directory` | List files and directories |
-| `delete_file` | Delete a file |
-| `run_command` | Execute a shell command |
+| `run_command` | Execute a shell command (use for file ops: `cat`, `ls`, `echo >`, etc.) |
 | `get_datetime` | Get current date and time |
 | `read_memory` | Read long-term memory |
 | `write_memory` | Write to long-term memory |
 | `append_memory` | Append to long-term memory |
 | `task_complete` | Signal task completion |
+
+**Note:** File operations are handled via `run_command` using standard Linux commands (`cat`, `ls`, `echo`, `rm`, etc.). This keeps the tool set minimal while providing full filesystem access.
 
 ## Model Compatibility
 

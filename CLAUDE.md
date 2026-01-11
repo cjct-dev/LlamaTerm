@@ -53,7 +53,7 @@ src/
 - **Tool Registration**: `@register_tool` decorator in `tools.py` populates `TOOLS` dict and `TOOL_HANDLERS` dict
 - **Agentic Loop**: `run_agentic_loop()` in `main.py` streams responses, executes tool calls, loops until `task_complete` or no more calls (max 50 iterations safety limit)
 - **MCP Tools**: Prefixed as `mcp_<server>_<tool>` to avoid collisions
-- **Path Safety**: `is_safe_path()` in `utils.py` restricts file ops to working directory
+- **File Operations**: Handled via `run_command` using standard Linux commands (`cat`, `ls`, `echo >`, `rm`, etc.) - no separate file tools
 
 ## Implementation Details
 
