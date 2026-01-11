@@ -158,6 +158,26 @@ The AI has access to these tools:
 | `append_memory` | Append to long-term memory |
 | `task_complete` | Signal task completion |
 
+## Model Compatibility
+
+Not all models support tool calling. Models with chat templates that require strict user/assistant alternation (like Gemma) cannot use the OpenAI-style tool calling format.
+
+**Incompatible models are automatically detected** and marked with `[no tools]` in the model selection list. When using an incompatible model:
+- A warning is displayed: "Running in chat-only mode"
+- Tools are disabled (no file operations, commands, or MCP tools)
+- The AI functions as a standard chatbot
+
+**Known incompatible model patterns:**
+- `gemma` (all variants)
+- `phi-2`, `phi2`
+
+To add custom models to the no-tools list, edit `.llamaterm/config.json`:
+```json
+{
+  "no_tool_models": ["my-custom-model"]
+}
+```
+
 ## MCP Integration
 
 LlamaTerm supports the [Model Context Protocol](https://modelcontextprotocol.io/) for extending capabilities with external tools.

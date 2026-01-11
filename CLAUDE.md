@@ -79,6 +79,19 @@ When LLM only returns tool calls (no text), `message["content"]` is `None`. Hand
 - Health check: `/health` returns `{"status": "ok"}`
 - Supports both streaming (SSE) and non-streaming responses
 
+### Model Compatibility
+Not all models support tool calling. Models with chat templates requiring strict user/assistant role alternation (e.g., Gemma) fail with HTTP 500 when tool messages (`role: "tool"`) are included.
+
+**Detection**: `config.model_supports_tools()` checks model name against `NO_TOOL_SUPPORT_PATTERNS` in `config.py`
+
+**Behavior when tools unsupported**:
+- `self.tools_enabled = False` in main.py
+- Warning displayed to user
+- `tools=None` passed to `chat_completion()` - runs as plain chatbot
+- Model selection shows `[no tools]` marker
+
+**To add new incompatible models**: Add pattern to `NO_TOOL_SUPPORT_PATTERNS` in `config.py` or user can add to `no_tool_models` list in config.json
+
 ## Adding New Tools
 
 ```python

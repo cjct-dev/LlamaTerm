@@ -30,9 +30,18 @@ class LlamaTerm:
         self.mcp_client = MCPClient()
         self.interrupted = False
         self.running = True
+        self.tools_enabled = True  # Will be set based on model compatibility
 
         # Setup interrupt handler
         signal.signal(signal.SIGINT, self._handle_interrupt)
+
+    def _check_tool_support(self) -> None:
+        """Check if current model supports tools and update state."""
+        model = self.config.get_model()
+        self.tools_enabled = self.config.model_supports_tools(model)
+        if not self.tools_enabled:
+            print_warning(f"Model '{model}' does not support tool calling")
+            print_warning("Running in chat-only mode (no file ops, commands, or MCP tools)")
 
     def _handle_interrupt(self, signum, frame):
         """Handle Ctrl+C interrupt."""
@@ -80,7 +89,9 @@ class LlamaTerm:
             else:
                 print("\nSelect a model:")
                 for i, model in enumerate(models, 1):
-                    print(f"  {i}. {model}")
+                    # Mark models that don't support tools
+                    tool_marker = "" if self.config.model_supports_tools(model) else " [no tools]"
+                    print(f"  {i}. {model}{tool_marker}")
                 while True:
                     try:
                         choice = input("Enter number: ").strip()
@@ -94,6 +105,9 @@ class LlamaTerm:
                     print_error("Invalid choice")
         else:
             print_info(f"Using model: {current_model}")
+
+        # Check if selected model supports tools
+        self._check_tool_support()
 
         # Load MCP servers from config
         self._load_mcp_servers()
@@ -233,13 +247,16 @@ Tips:
     def _handle_model(self, args: str) -> None:
         """Handle /model command."""
         if not args:
-            print(f"Current model: {self.config.get_model()}")
+            model = self.config.get_model()
+            tools_status = "enabled" if self.tools_enabled else "disabled"
+            print(f"Current model: {model} (tools: {tools_status})")
             return
 
         models = self.client.get_model_names()
         if args in models:
             self.config.set_model(args)
             print_success(f"Model changed to: {args}")
+            self._check_tool_support()
         else:
             print_error(f"Unknown model: {args}")
             print_info(f"Available: {', '.join(models)}")
@@ -291,6 +308,11 @@ Tips:
 
     def _show_tools(self) -> None:
         """Show available tools."""
+        if not self.tools_enabled:
+            print_warning("Tools are disabled for current model")
+            print_info("Switch to a tool-compatible model to enable tools")
+            print()
+
         print("Built-in tools:")
         for name, tool in TOOLS.items():
             print(f"  - {name}: {tool['description'][:60]}...")
@@ -316,7 +338,9 @@ Tips:
             try:
                 # Get response from LLM
                 messages = self.conversation.get_api_messages()
-                tools = self._get_all_tools()
+
+                # Only include tools if the model supports them
+                tools = self._get_all_tools() if self.tools_enabled else None
 
                 response_text = ""
                 tool_calls = []

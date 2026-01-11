@@ -5,6 +5,14 @@ import os
 from pathlib import Path
 from typing import Any, Optional
 
+# Models that don't support OpenAI-style tool calling
+# (their chat templates require strict user/assistant alternation)
+NO_TOOL_SUPPORT_PATTERNS = [
+    "gemma",
+    "phi-2",
+    "phi2",
+]
+
 DEFAULT_CONFIG = {
     "server_url": "http://100.82.203.89:8080",
     "model": None,  # Will be selected from available models
@@ -18,6 +26,7 @@ DEFAULT_CONFIG = {
     "memory_file": ".llamaterm/memory.md",
     "session_file": ".llamaterm/session.json",
     "auto_save": True,
+    "no_tool_models": [],  # Additional user-specified models without tool support
 }
 
 
@@ -83,6 +92,27 @@ class Config:
     def set_model(self, model: str) -> None:
         """Set the model to use."""
         self.set("model", model)
+
+    def model_supports_tools(self, model: Optional[str] = None) -> bool:
+        """Check if a model supports tool calling."""
+        model = model or self.get_model()
+        if not model:
+            return True
+
+        model_lower = model.lower()
+
+        # Check built-in patterns
+        for pattern in NO_TOOL_SUPPORT_PATTERNS:
+            if pattern.lower() in model_lower:
+                return False
+
+        # Check user-specified models
+        user_no_tool = self.data.get("no_tool_models", [])
+        for entry in user_no_tool:
+            if entry.lower() in model_lower:
+                return False
+
+        return True
 
     def get_memory_file(self) -> Path:
         """Get the path to the memory file."""
